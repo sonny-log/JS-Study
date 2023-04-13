@@ -1,52 +1,56 @@
 function main() {
   load_data((data) => {
     //set_now(0);
-    set_now(5);
+    set_now(0);
     set_data({list: sort_data(data), size: data.size, max: data.max});
     display_body(get_data(), get_now());
   });
 }
 
-function display_body(data, index) {
-  const photo = document.getElementById('content');
+function display_body(data, now) {  // index > now 로 [파라미터명 변경]
+  const content = document.getElementById('content');  // photo > content 로 바꿈 [변수명 변경]
   const page = document.getElementById('page');
-  touch_event(photo, page, data);
-  display_div(photo, index);
-  display_page(page, index, data);
-  jump_page(photo, index, data); 
+  touch_event(content, data);
+  display_div(content, now);
+  display_page(page, now, data);
+  jump_page(content, now, data); 
   display_photo(data.list);
 }
 
-function display_div(photo, index) {
-  const size = get_page_size() - 1;
+function display_div(content, now) {
+  const size = get_page_size();
   let html = '';
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 3; i++) { // card_wrap id 고정 // div 3개를 만들어줌
     html += `<div class='box_wrap'><div id='card_wrap_` + i + `'>`;
-    for (let j = 0; j < 4; j++) {
-      let k = index + i - 1;
-      if (index != 0 && k < 0) {
-        k = size + i - 1;
+    for (let j = 0; j < 4; j++) {  // 4로 지정한 이유는 화면내 card를 4개로 한정했기 때문
+      let card_idx = now + i - 1;
+      if (card_idx < 0) {
+        card_idx = size;
       }
-      if (index == 0 && k < 0) {
-        k = size;
+      if (card_idx > size) {
+        card_idx = 0;
       }
-      if (index != size && k > size) {
-        k = k-index;
-      }
-      if(index == size && k > size) {
-        k = k-index-1;
-      }
-      html += create_div(k, j);
-      // -1 >> 4 5 0   // -2-1 0
-      // 6 >>  5 0 1  // 5 6 7 
+      html += create_div(card_idx, j);
     }
     html += '</div></div>';
   }
-  photo.innerHTML = html;
+  content.innerHTML = html;
+}
+
+function create_div(card_idx, j) {
+  let html = '';
+  html +=
+  `
+    <div class="card" id="card_` + card_idx + `_` + j + `">
+    <div class="image" style="background-image: url('img/plus.png')"></div>
+    <div class="text"> ` + (card_idx + 1) + `_` + j + ` </div>
+    </div>
+  `;
+  return html;
 }
 
 function display_page(page, now) {
-  const size = get_page_size();
+  const size = get_page_size() + 1; // < 만 쓰기위해, size 만큼 page 생성하기 위함
   let html = '';
   
   for (let i = 0; i < size; i++) {
@@ -55,22 +59,10 @@ function display_page(page, now) {
   page.innerHTML = html;
 }
 
-function create_div(i, j) {
-  let html = '';
-  html +=
-  `
-    <div class="card" id="card_`+ i + `_` + j +`">
-    <div class="image" style="background-image: url('img/plus.png')"></div>
-    <div class="text"> ` + (i+1) + `_` + j + ` </div>
-    </div>
-  `;
-  return html;
-}
-
 function create_page(i, now) {
   if (i === now) {
     return (
-      `<div class="active" onclick="click_page(` + i +`)">`+ (i + 1) + `</div>`
+      `<div class="active" onclick="click_page(` + i + `)">` + (i + 1) + `</div>`
     );
   } else {
     return (
@@ -92,7 +84,7 @@ function display_photo(list) {
 
 function set_image(card, item) {
   const photo = card.querySelector('.image');
-  photo.style.backgroundImage = 'url('+item.img+')';
+  photo.style.backgroundImage = 'url(' + item.img + ')';
   photo.style.backgroundSize = '100% 100%';
 }
 
@@ -101,101 +93,103 @@ function set_text(card, item) {
   txt.innerHTML = item.txt;
 }
 
-function click_page(data_index) {
+function click_page(now) {
   const div = document.getElementById('content');
-  change_page_index(data_index);
-  jump_page(div, data_index);
-  display_div(div, data_index);
+  change_page_index(now);
+  jump_page(div);
+  display_div(div, now);
   display_photo(get_data().list);
 }
 
-function change_page_index(data_index) {
+function change_page_index(now) {
   let page = document.getElementById('page');
   let len = page.children.length;
   for (let i = 0; i < len; i++) {
-    if (i === data_index) {
+    if (i === now) {
       page.children[i].classList.add('active');
     } else {
       page.children[i].classList.remove('active');
     }
-  }
+  } set_now(now);
 }
 
-function touch_event(div, page, data) {
+function touch_event(content, data) {
   let stx = 0;
   let edx = 0;
   let x = 0;
-  let index = 0;
-  div.addEventListener('touchstart', (e) => {
-    index = get_now();
-    stx = e.touches[0].clientX;
-    div.style.transitionDuration = '0s'; 
+  let now = 0;
+  content.addEventListener('touchstart', (e) => {
+    now = get_now();
+    stx = e.touches[0].clientX; // stx 는 고정
+    content.style.transitionDuration = '0s'; 
   });
-  div.addEventListener('touchmove', (e) => {
-    x = (-div.clientWidth) + (e.touches[0].clientX - stx);
-    touch_move(div, x);
+  content.addEventListener('touchmove', (e) => {
+    x = (-content.clientWidth) + (e.touches[0].clientX - stx); // 터치 시작 위치 조정
+    touch_move(content, x);
   }) 
-  div.addEventListener('touchend', (e) => { 
+  content.addEventListener('touchend', (e) => { //1. 슬라이드 동작 실행
     edx = e.changedTouches[0].clientX;
-    div.style.transitionDuration = '0.4s';
-    stx < edx ? prev_page(div, index) : next_page(div, index);
+    content.style.transitionDuration = '0.4s'; // 슬라이드 동작을 위함
+    stx < edx ? prev_page(content, now) : next_page(content, now); // 
   });
 
-  div.ontransitioncancel = () => {
-    div.style.transitionDuration = '0s';
+  content.ontransitioncancel = () => {
+    content.style.transitionDuration = '0s';
   };
-  div.ontransitionend = () => { 
-    div.style.transitionDuration = '0s';
-    let idx = get_now();
-    display_div(div, idx);
-    display_photo(data.list);
-    div.style.transform = 'translateX(' + -div.clientWidth + 'px)'
+  content.ontransitionend = () => { // 2. 슬라이드 동작이 끝남과 동시에 div 새로 생성
+    console.log('[2]change_content');
+    content.style.transitionDuration = '0s'; // 눈속임 (끝남과 동시에 재 생성)
+    let idx = get_now(); // touchstart 와는 다른 idx임 prev 와 next에서 새로 저장된 idx를 불러옴
+    display_div(content, idx); // div를 새로 그려줌 
+    display_photo(data.list); // data 배치
+    content.style.transform = 'translateX(' + -content.clientWidth + 'px)'; // content 이동
   };
 }
 
-function touch_move(div, x) {
+function touch_move(content, x) {
   let pos = x;
-  div.style.transform = 'translateX(' + pos + 'px)';
+  content.style.transform = 'translateX(' + pos + 'px)';
 }
 
-function slide_event(div, index, offset) {
-  console.log(index);
-  const pos = div.clientWidth * offset;
-  div.style.transform = 'translateX(' + (-pos) + 'px)';
-  set_now(index);
+function slide_event(content, offset) { // 슬라이드 동작하는 애니메이션이 일어남
+  console.log('[1]slide');
+  const pos = content.clientWidth * offset;
+  // offset을 0과 2로 줄 수 있는 이유는 div 갯수를 3개로 제한했기 때문임
+  // 슬라이드 되는 효과를 줄 수 있음.
+  content.style.transform = 'translateX(' + (-pos) + 'px)';
 }
 
-function loop_event(div, index, offset) {
-  const size = get_page_size() - 1;
-  if (index < 0) {
-    k = size;
-    change_page_index(k);
-    slide_event(div, k, offset);
-  }else if (index > size) {
-    k = 0;
-    change_page_index(k);
-    slide_event(div, k, offset);
+function prev_page(content, now) {
+  now = now - 1;
+  loop_event(content, now, 0); 
+}
+  
+function next_page(content, now) {
+  now = now + 1;
+  loop_event(content, now, 2);
+}
+
+function loop_event(content, now, offset) {
+  const size = get_page_size(); // 페이지 갯수 6p 면 5 
+  if (now < 0) { // 1페이지(idx=0)에서 -1 되는것을 방지  
+    now = size;
+    set_content(content, now, offset)
+  }else if (now > size) { // 마지막 페이지에서 오버 되는것을 방지
+    now = 0;
+    set_content(content, now, offset)
   }else{
-    change_page_index(index);
-    slide_event(div, index, offset);
+    set_content(content, now, offset)
   }
-  
-}
-function prev_page(div, index) {
-  index = index-1;
-  loop_event(div, index, 0);
-}
-  
-function next_page(div, index) {
-  index = index+1;
-  loop_event(div, index, 2);
-  
 }
 
-function jump_page(div, index) {
-  const deviceWidth = div.clientWidth;
-  div.style.transform = 'translateX(' + -deviceWidth + 'px)';
-  set_now(index);
+function set_content(content, now, offset) {  // 함수를 밖으로 꺼냄 * 
+  change_page_index(now);
+  slide_event(content, offset);
+}
+
+function jump_page(content) {
+  const deviceWidth = content.clientWidth;
+  content.style.transform = 'translateX(' + -deviceWidth + 'px)'; // 3개의 div 중 가운데로 위치 시켜줌
 }
 
 function unload_test() {
