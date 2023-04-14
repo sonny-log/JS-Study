@@ -4,7 +4,7 @@ html, body{
   margin:0;
   padding: 0;
 }
-.wrap_content{
+.page{
   position: absolute;
   left: 0px;
   top: 0px;
@@ -19,6 +19,9 @@ html, body{
   white-space: nowrap;/* 
   border: 1px solid black;  */
   transition: transform 0s ease;
+  /* transition: transform 0s ease-in; */
+  /* transition: transform 0s ease-out; */
+  /* transition: transform 0s ease-in-out; */
 }
 .box_wrap{
   display: inline-block;
@@ -61,14 +64,14 @@ html, body{
   overflow: hidden;
   white-space: normal;
 }
-#page{
+#indicator{
   display: flex;
   font-size: 50px;
   padding: 0px;
   height: auto;
   justify-content: center;
 }
-#page > div{
+#indicator > div{
   display: flex;
   margin: 20px;
   width: 100px;
@@ -82,7 +85,7 @@ html, body{
   text-shadow: none;
 }
 
-#page > div.active{
+#indicator > div.active{
   background-color: #FF8156;
   color: white;
   text-shadow: -2px -2px grey;
